@@ -1,58 +1,58 @@
 from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse
+from typing import Dict
+from schemas import *
 
-app = FastAPI()
+app = FastAPI(title="Cost Management API")
 
-costs_DB = {
-    1: {"description": "for test1", "amount": 1.5},
-    2: {"description": "for test2", "amount": 324.23},
-    3: {"description": "for test3", "amount": 480.65},
+
+
+# -------------------------
+# DATABASE
+# -------------------------
+costs_DB: Dict[int, CostBase] = {
+    1: CostBase(description="for test1", amount=1.5),
+    2: CostBase(description="for test2", amount=324.23),
+    3: CostBase(description="for test3", amount=480.65),
 }
-
 
 next_id = max(costs_DB.keys()) + 1 if costs_DB else 1
 
+# -------------------------
+# CRUD Routes
+# -------------------------
 
-
-@app.get("/costs/")
+@app.get("/costs/", response_model=Dict[int, CostBase])
 def get_costs():
-    return JSONResponse(content=costs_DB, status_code=status.HTTP_200_OK)
+    return costs_DB
 
 
-
-@app.get("/cost/{id}/")
+@app.get("/cost/{id}/", response_model=CostResponse)
 def get_cost(id: int):
     if id in costs_DB:
-        return JSONResponse(content={"id": id, **costs_DB[id]}, status_code=status.HTTP_200_OK)
+        return CostResponse(id=id, **costs_DB[id].dict())
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
 
 
-
-@app.post("/cost/")
-def create_cost(description: str, amount: float):
+@app.post("/cost/", response_model=CostResponse, status_code=status.HTTP_201_CREATED)
+def create_cost(cost: CostCreate):
     global next_id
-    new_cost = {"description": description, "amount": amount}
-    costs_DB[next_id] = new_cost
-    response = {"id": next_id, **new_cost}
+    costs_DB[next_id] = cost
+    response = CostResponse(id=next_id, **cost.dict())
     next_id += 1
-    return JSONResponse(content=response, status_code=status.HTTP_201_CREATED)
+    return response
 
 
-
-@app.put("/cost/{id}/")
-def update_cost(id: int, description: str, amount: float):
+@app.put("/cost/{id}/", response_model=CostResponse)
+def update_cost(id: int, cost: CostUpdate):
     if id in costs_DB:
-        costs_DB[id]["description"] = description
-        costs_DB[id]["amount"] = amount
-        return JSONResponse(content={"message": f"Cost with ID {id} updated successfully"}, status_code=status.HTTP_200_OK)
+        costs_DB[id] = cost
+        return CostResponse(id=id, **cost.dict())
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
 
 
-
-@app.delete("/cost/{id}/")
+@app.delete("/cost/{id}/", status_code=status.HTTP_200_OK)
 def delete_cost(id: int):
     if id in costs_DB:
         del costs_DB[id]
-        return JSONResponse(content={"message": f"Cost with ID {id} deleted successfully"}, status_code=status.HTTP_200_OK)
+        return {"message": f"Cost with ID {id} deleted successfully"}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
-
