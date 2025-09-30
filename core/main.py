@@ -1,58 +1,61 @@
-from fastapi import FastAPI, HTTPException, status
-from typing import Dict
-from schemas import *
+from fastapi import FastAPI, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from core import models,database,schemas
 
-app = FastAPI(title="Cost Management API")
+app = FastAPI("Cost Management API")
 
-
-
-# -------------------------
-# DATABASE
-# -------------------------
-costs_DB: Dict[int, CostBase] = {
-    1: CostBase(description="for test1", amount=1.5),
-    2: CostBase(description="for test2", amount=324.23),
-    3: CostBase(description="for test3", amount=480.65),
-}
-
-next_id = max(costs_DB.keys()) + 1 if costs_DB else 1
-
-# -------------------------
-# CRUD Routes
-# -------------------------
-
-@app.get("/costs/", response_model=Dict[int, CostBase])
-def get_costs():
-    return costs_DB
+models.Base.metadata.create_all(bind=database.engine)
 
 
-@app.get("/cost/{id}/", response_model=CostResponse)
-def get_cost(id: int):
-    if id in costs_DB:
-        return CostResponse(id=id, **costs_DB[id].dict())
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-@app.post("/cost/", response_model=CostResponse, status_code=status.HTTP_201_CREATED)
-def create_cost(cost: CostCreate):
-    global next_id
-    costs_DB[next_id] = cost
-    response = CostResponse(id=next_id, **cost.dict())
-    next_id += 1
-    return response
+# ------------------- CRUD -------------------
+
+@app.post("/cost/", response_model=schemas.CostResponse, status_code=status.HTTP_201_CREATED)
+def create_cost(cost: schemas.CostCreate, db: Session = Depends(get_db)):
+    db_cost = models.Cost(description=cost.description, amount=cost.amount)
+    db.add(db_cost)
+    db.commit()
+    db.refresh(db_cost)
+    return db_cost
 
 
-@app.put("/cost/{id}/", response_model=CostResponse)
-def update_cost(id: int, cost: CostUpdate):
-    if id in costs_DB:
-        costs_DB[id] = cost
-        return CostResponse(id=id, **cost.dict())
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
+@app.get("/costs/", response_model=list[schemas.CostResponse])
+def get_costs(db: Session = Depends(get_db)):
+    return db.query(models.Cost).all()
 
 
-@app.delete("/cost/{id}/", status_code=status.HTTP_200_OK)
-def delete_cost(id: int):
-    if id in costs_DB:
-        del costs_DB[id]
-        return {"message": f"Cost with ID {id} deleted successfully"}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cost not found")
+@app.get("/cost/{id}/", response_model=schemas.CostResponse)
+def get_cost(id: int, db: Session = Depends(get_db)):
+    cost = db.query(models.Cost).filter(models.Cost.id == id).first()
+    if not cost:
+        raise HTTPException(status_code=404, detail="Cost not found")
+    return cost
+
+
+@app.put("/cost/{id}/", response_model=schemas.CostResponse)
+def update_cost(id: int, updated: schemas.CostUpdate, db: Session = Depends(get_db)):
+    cost = db.query(models.Cost).filter(models.Cost.id == id).first()
+    if not cost:
+        raise HTTPException(status_code=404, detail="Cost not found")
+    cost.description = updated.description
+    cost.amount = updated.amount
+    db.commit()
+    db.refresh(cost)
+    return cost
+
+
+@app.delete("/cost/{id}/", status_code=200)
+def delete_cost(id: int, db: Session = Depends(get_db)):
+    cost = db.query(models.Cost).filter(models.Cost.id == id).first()
+    if not cost:
+        raise HTTPException(status_code=404, detail="Cost not found")
+    db.delete(cost)
+    db.commit()
+    return {"message": f"Cost with ID {id} deleted successfully"}
