@@ -37,7 +37,7 @@ The database currently contains only one table: **costs**.
 
 ### 📊 ERD Diagram
 
-![Costs Schema]("./docs/Cost Diagram.drawio.png")
+![Costs Schema](./docs/Costs.png)
 *(You can find the editable version in `docs/Costs.drawio`)*
 
 ---
