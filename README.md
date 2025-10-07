@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/fastapi.png" alt="FastAPI Logo" width="100%"/>
+  <img src="./docs/fastapi.png" alt="FastAPI Logo" width="50%"/>
 </p>
 
 
