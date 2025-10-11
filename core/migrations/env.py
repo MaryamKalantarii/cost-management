@@ -1,11 +1,14 @@
+import os
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from core.database import Base
-import models
 from alembic import context
+from core.database import Base
+from pathlib import Path
+from dotenv import load_dotenv
 
+from users.models import *
+from costs.models import *
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -15,10 +18,33 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+
+# Define the path to the .env file (parent directory of FastAPI project)
+BASE_DIR = Path(__file__).resolve().parent.parent  # Move up one directory
+ENV_PATH = BASE_DIR / ".env"
+
+if ENV_PATH.exists():
+    load_dotenv(ENV_PATH)
+else:
+    # Log or handle that the .env file is missing, but proceed with global env variables
+    print(f"Warning: .env file not found. Falling back to global environment variables.")
+
+# Get the database URL from environment variables
+SQLALCHEMY_DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URL")
+
+config = context.config
+
+# Override sqlalchemy.url in alembic config with DATABASE_URL
+if SQLALCHEMY_DATABASE_URL:
+    config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
+else:
+    raise ValueError("SQLALCHEMY_DATABASE_URL is not set in the environment variables")
+
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -45,6 +71,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        # render_as_batch=True
     )
 
     with context.begin_transaction():
@@ -67,6 +94,7 @@ def run_migrations_online() -> None:
     with connectable.connect() as connection:
         context.configure(
             connection=connection, target_metadata=target_metadata
+            # render_as_batch=True
         )
 
         with context.begin_transaction():
