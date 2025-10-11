@@ -20,4 +20,5 @@ class UserLoginSchema(BaseModel):
     username: str = Field(...,max_length=250,description="username of the user")
     password: str = Field(...,description="password of user")
 
-
+class UserRefreshTokenSchema(BaseModel):
+    token: str = Field(..., description="refresh token of the user")
