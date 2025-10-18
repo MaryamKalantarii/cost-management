@@ -21,7 +21,22 @@ The API manages expenses and includes the following fields for each cost:
 | `amount` | Float | The cost amount (cannot be negative) |
 
 ---
+## 🔐 JWT Authentication & Cookie Security
 
+This project uses **JWT-based authentication** with `access` and `refresh` tokens.
+
+- **Access Token**: Short-lived (5 minutes), used for quick authentication.
+- **Refresh Token**: Long-lived (24 hours), used to renew sessions without re-login.
+
+### Why store tokens in HttpOnly cookies?
+Using `HttpOnly` and `Secure` cookies instead of localStorage or headers helps prevent **XSS (Cross-Site Scripting)** attacks, since JavaScript cannot access cookies marked as `HttpOnly`.  
+It also provides better security for session handling and automatic inclusion in requests.
+
+Cookies are set with:
+- `httponly=True`
+- `secure=True` *(in production)*
+- `samesite="lax"`
+---
 ## 🧩 Features
 
 - CRUD operations for managing costs  
