@@ -13,7 +13,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def user_register(request: UserRegisterSchema, db: Session = Depends(get_db)):
     """
-    ✅ Register a new user.
+    Register a new user.
     - Checks if username already exists.
     - Hashes the password before saving.
     - Stores the user in the database.
@@ -34,7 +34,7 @@ async def user_register(request: UserRegisterSchema, db: Session = Depends(get_d
 @router.post("/login")
 async def user_login(request: UserLoginSchema, response: Response, db: Session = Depends(get_db)):
     """
-    ✅ User login and token generation.
+    User login and token generation.
     - Verifies username and password.
     - Generates an access token (short-lived) and refresh token (long-lived).
     - Stores tokens in secure HttpOnly cookies.
@@ -53,7 +53,7 @@ async def user_login(request: UserLoginSchema, response: Response, db: Session =
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # 🔒 in production: True
+        secure=False,  # in production: True
         samesite="strict",
         max_age=60 * 5,
     )
@@ -66,20 +66,16 @@ async def user_login(request: UserLoginSchema, response: Response, db: Session =
         max_age=3600 * 24,
     )
 
-    return JSONResponse(
-        content={
-            "detail": "logged in successfully",
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
-    )
+    return {"detail": "logged in successfully"}
+
+   
 
 
 # ------------------ REFRESH TOKEN ------------------
 @router.post("/refresh-token")
 async def refresh_access_token(request: Request, response: Response):
     """
-    🔄 Refresh access token.
+    Refresh access token.
     - Reads refresh token from HttpOnly cookie.
     - Validates it.
     - Generates a new access token and updates the cookie.
@@ -97,7 +93,7 @@ async def refresh_access_token(request: Request, response: Response):
         key="access_token",
         value=new_access_token,
         httponly=True,
-        secure=False,  # 🔒 set True in production
+        secure=False,  # set True in production
         samesite="strict",
         max_age=60 * 5,
     )
@@ -108,7 +104,7 @@ async def refresh_access_token(request: Request, response: Response):
 @router.post("/logout")
 async def logout(response: Response):
     """
-    🚪 Logout user.
+    Logout user.
     - Deletes both access_token and refresh_token cookies.
     - Ends the user's session securely.
     """
