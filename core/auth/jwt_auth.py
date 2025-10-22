@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import DecodeError, InvalidSignatureError
-from core.users.models import UserModel
-from core.core.database import get_db
-from core.core.config import settings
+from users.models import UserModel
+from core.database import get_db
+from core.config import settings
 
 # HTTP Bearer scheme (reads Authorization: Bearer <token>)
 security = HTTPBearer(auto_error=False)

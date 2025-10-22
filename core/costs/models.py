@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String,Float ,ForeignKey
-from core.core.database import Base
+from core.database import Base
 from sqlalchemy.orm import relationship
 
 class Cost(Base):

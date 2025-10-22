@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from core.users.schemas import UserRegisterSchema, UserLoginSchema
-from core.users.models import UserModel
-from core.core.database import get_db
-from core.auth.jwt_auth import generate_access_token, generate_refresh_token, decode_refresh_token
+from users.schemas import UserRegisterSchema, UserLoginSchema
+from users.models import UserModel
+from core.database import get_db
+from auth.jwt_auth import generate_access_token, generate_refresh_token, decode_refresh_token
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

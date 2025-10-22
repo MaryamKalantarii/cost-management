@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from core.costs.routes import router as costs_routes
-from core.users.routes import router as users_routs
+from costs.routes import router as costs_routes
+from users.routes import router as users_routs
 app = FastAPI(
     title="Cost Management API",             
     description="An API for managing and tracking costs in your application.",  
